@@ -1,0 +1,64 @@
+name: freight_match
+description: A freight matching marketplace app
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.10.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  google_fonts: ^6.2.1
+  # UI & Icons
+  cupertino_icons: ^1.0.8
+  flutter_svg: ^2.0.9
+  
+  # Navigation
+  go_router: ^17.1.0
+  
+  # State Management
+  flutter_riverpod: ^3.2.1
+  
+  # API & Networking
+  dio: ^5.4.0
+  
+  # Storage
+  shared_preferences: ^2.2.2
+  
+  # Maps
+  google_maps_flutter: ^2.5.3
+  geolocator: ^14.0.2
+  geocoding: ^4.0.0
+    
+  # Forms & Validation
+  flutter_form_builder: ^10.3.0+2
+  form_builder_validators: ^11.3.0
+  
+  # Image Handling
+  image_picker: ^1.0.7
+  cached_network_image: ^3.3.1
+  
+  # Date & Time
+  intl: ^0.20.2
+  
+  # Animations
+  animate_do: ^4.2.0
+  flutter_animate: ^4.5.0
+  
+  # Utils
+  uuid: ^4.3.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  
+  # Add your assets
+  assets:
+    - assets/images/
+    - assets/icons/
+    

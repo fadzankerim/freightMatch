@@ -1,183 +1,167 @@
 import 'package:flutter/material.dart';
-import 'package:freight_match/config/theme.dart';
-import 'package:freight_match/widgets/common/custom_button.dart';
-import 'package:freight_match/widgets/common/custom_input.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../config/theme.dart';
+import '../../providers/auth_provider.dart';
+import '../../widgets/common/custom_button.dart';
+import '../../widgets/common/custom_input.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class LoginScreen extends ConsumerStatefulWidget {
+  final VoidCallback onSuccess;
+  final VoidCallback onGoRegister;
+
+  const LoginScreen({
+    super.key,
+    required this.onSuccess,
+    required this.onGoRegister,
+  });
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _isLoading = false;
-  bool _obscurePassword = true;
+  final _emailCtrl = TextEditingController(text: 'alex@freightmatch.app');
+  final _passCtrl  = TextEditingController(text: 'password123');
+  bool _obscure = true;
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
-      
-      setState(() => _isLoading = false);
-      
-      // Navigate to home (we'll build this next)
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login successful!')),
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    await ref.read(authProvider.notifier).login(
+          _emailCtrl.text.trim(),
+          _passCtrl.text,
         );
-      }
+    if (mounted && ref.read(authProvider).isAuthenticated) {
+      widget.onSuccess();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final loading = ref.watch(authProvider).isLoading;
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppTheme.spacingLG),
+          padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: AppTheme.spacingXXL),
-                
-                // Logo
-                Center(
-                  child: Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor,
-                      borderRadius: BorderRadius.circular(20),
+                const SizedBox(height: 40),
+
+                // Logo row
+                Row(
+                  children: [
+                    Container(
+                      width: 44, height: 44,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [AppColors.primary, AppColors.darkTeal],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.local_shipping_rounded,
+                          size: 22, color: AppColors.beige),
                     ),
-                    child: const Icon(
-                      Icons.local_shipping,
-                      size: 40,
-                      color: AppTheme.beige,
+                    const SizedBox(width: 12),
+                    Text(
+                      'FreightMatch',
+                      style: GoogleFonts.syne(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary),
                     ),
-                  ),
-                ),
-                
-                const SizedBox(height: AppTheme.spacingXL),
-                
-                // Title
-                Text(
-                  'Welcome Back',
-                  style: Theme.of(context).textTheme.displaySmall,
-                  textAlign: TextAlign.center,
-                ),
-                
-                const SizedBox(height: AppTheme.spacingSM),
-                
-                Text(
-                  'Sign in to continue',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  textAlign: TextAlign.center,
-                ),
-                
-                const SizedBox(height: AppTheme.spacingXXL),
-                
-                // Email Input
+                  ],
+                ).animate().fade().slideX(begin: -0.1, curve: Curves.easeOutCubic),
+
+                const SizedBox(height: 44),
+
+                Text('Welcome back',
+                    style: Theme.of(context).textTheme.displaySmall)
+                    .animate().fade(delay: 100.ms).slideY(begin: 0.2),
+
+                const SizedBox(height: 6),
+                Text('Sign in to find your next haul',
+                    style: Theme.of(context).textTheme.bodyMedium)
+                    .animate().fade(delay: 150.ms),
+
+                const SizedBox(height: 36),
+
                 CustomInput(
-                  controller: _emailController,
-                  label: 'Email',
-                  hint: 'Enter your email',
-                  keyboardType: TextInputType.emailAddress,
+                  controller: _emailCtrl,
+                  label: 'EMAIL',
+                  hint: 'your@email.com',
                   prefixIcon: Icons.email_outlined,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    if (!value.contains('@')) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
-                ),
-                
-                const SizedBox(height: AppTheme.spacingMD),
-                
-                // Password Input
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  validator: (v) =>
+                      v == null || !v.contains('@') ? 'Enter a valid email' : null,
+                ).animate().fade(delay: 200.ms).slideY(begin: 0.1),
+
+                const SizedBox(height: 16),
+
                 CustomInput(
-                  controller: _passwordController,
-                  label: 'Password',
-                  hint: 'Enter your password',
-                  obscureText: _obscurePassword,
-                  prefixIcon: Icons.lock_outlined,
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                      color: AppTheme.textSecondary,
+                  controller: _passCtrl,
+                  label: 'PASSWORD',
+                  hint: '••••••••',
+                  prefixIcon: Icons.lock_outline,
+                  obscureText: _obscure,
+                  textInputAction: TextInputAction.done,
+                  suffix: GestureDetector(
+                    onTap: () => setState(() => _obscure = !_obscure),
+                    child: Icon(
+                      _obscure
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                      size: 18,
+                      color: AppColors.textMuted,
                     ),
-                    onPressed: () {
-                      setState(() => _obscurePassword = !_obscurePassword);
-                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
-                    }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
-                ),
-                
-                const SizedBox(height: AppTheme.spacingSM),
-                
-                // Forgot Password
+                  validator: (v) =>
+                      v == null || v.length < 6 ? 'Min 6 characters' : null,
+                ).animate().fade(delay: 250.ms).slideY(begin: 0.1),
+
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {
-                      // TODO: Navigate to forgot password
-                    },
-                    child: const Text('Forgot Password?'),
+                    onPressed: () {},
+                    child: const Text('Forgot password?'),
                   ),
                 ),
-                
-                const SizedBox(height: AppTheme.spacingXL),
-                
-                // Login Button
+
+                const SizedBox(height: 20),
+
                 CustomButton(
-                  text: 'Sign In',
-                  onPressed: _handleLogin,
-                  isLoading: _isLoading,
-                ),
-                
-                const SizedBox(height: AppTheme.spacingLG),
-                
-                // Register Link
+                  label: 'Sign In',
+                  onPressed: _submit,
+                  isLoading: loading,
+                  width: double.infinity,
+                ).animate().fade(delay: 300.ms).slideY(begin: 0.1),
+
+                const SizedBox(height: 28),
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      "Don't have an account? ",
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
+                    Text("Don't have an account? ",
+                        style: Theme.of(context).textTheme.bodyMedium),
                     TextButton(
-                      onPressed: () {
-                        // TODO: Navigate to register
-                      },
+                      onPressed: widget.onGoRegister,
                       child: const Text('Sign Up'),
                     ),
                   ],
-                ),
+                ).animate().fade(delay: 380.ms),
               ],
             ),
           ),

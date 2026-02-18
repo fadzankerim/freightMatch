@@ -1,107 +1,119 @@
 import 'package:flutter/material.dart';
-import 'package:freight_match/config/theme.dart';
-import 'login_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../config/theme.dart';
+import '../../utils/constants.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final VoidCallback onComplete;
+  const SplashScreen({super.key, required this.onComplete});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> 
+class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
+  late final AnimationController _ctrl;
 
   @override
   void initState() {
     super.initState();
-    
-    // Setup animations
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    );
-    
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
-    );
-    
-    _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
-    );
-    
-    // Start animation
-    _controller.forward();
-    
-    // Navigate after 2 seconds
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-        );
-      }
-    });
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1200))
+      ..forward();
+    Future.delayed(AppConstants.splashDelay, widget.onComplete);
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _ctrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.bgPrimary,
+      backgroundColor: AppColors.bgPrimary,
       body: Center(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Truck icon (you can replace with your logo)
-                Container(
-                  width: 120,
-                  height: 120,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Logo
+            Container(
+              width: 90,
+              height: 90,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [AppColors.primary, AppColors.darkTeal],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.35),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.local_shipping_rounded,
+                  size: 46, color: AppColors.beige),
+            )
+                .animate(controller: _ctrl)
+                .scale(begin: const Offset(0.4, 0.4), curve: Curves.elasticOut)
+                .fade(),
+
+            const SizedBox(height: 24),
+
+            Text(
+              AppConstants.appName,
+              style: GoogleFonts.syne(
+                fontSize: 34,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+                letterSpacing: -0.5,
+              ),
+            )
+                .animate(controller: _ctrl)
+                .fade(delay: 400.ms)
+                .slideY(begin: 0.3, curve: Curves.easeOutCubic),
+
+            const SizedBox(height: 8),
+
+            Text(
+              AppConstants.appTagline,
+              style: GoogleFonts.dmSans(
+                  fontSize: 14, color: AppColors.textMuted),
+            )
+                .animate(controller: _ctrl)
+                .fade(delay: 650.ms),
+
+            const SizedBox(height: 60),
+
+            // Loading dots
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(
+                3,
+                (i) => Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: 6,
+                  height: 6,
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor,
-                    borderRadius: BorderRadius.circular(30),
+                    color: AppColors.primary.withOpacity(0.6),
+                    shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.local_shipping_rounded,
-                    size: 60,
-                    color: AppTheme.beige,
-                  ),
-                ),
-                
-                const SizedBox(height: AppTheme.spacingXL),
-                
-                // App name
-                Text(
-                  'FreightMatch',
-                  style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-                
-                const SizedBox(height: AppTheme.spacingSM),
-                
-                // Tagline
-                Text(
-                  'Find freight on your route',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppTheme.textSecondary,
-                  ),
-                ),
-              ],
+                )
+                    .animate(onPlay: (c) => c.repeat(reverse: true))
+                    .fade(
+                      delay: Duration(milliseconds: 800 + i * 150),
+                      duration: 600.ms,
+                    ),
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

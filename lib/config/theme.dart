@@ -65,12 +65,29 @@ class AppRadius {
 
 class AppSpacing {
   AppSpacing._();
+  static const double xxs = 2;
   static const double xs  = 4;
   static const double sm  = 8;
+  static const double smd = 12;
   static const double md  = 16;
+  static const double mlg = 20;
   static const double lg  = 24;
+  static const double lxl = 28;
   static const double xl  = 32;
+  static const double xxlg = 40;
   static const double xxl = 48;
+}
+
+class AppTypeScale {
+  AppTypeScale._();
+  static const double label = 11;
+  static const double bodyS = 12;
+  static const double bodyM = 14;
+  static const double bodyL = 16;
+  static const double titleS = 18;
+  static const double titleM = 22;
+  static const double titleL = 28;
+  static const double display = 34;
 }
 
 class AppTheme {

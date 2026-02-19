@@ -1,17 +1,23 @@
-# freight_match
+# Freight Match
 
-A new Flutter project.
+## Google Maps setup
 
-## Getting Started
+1. Android:
+- Open `/Users/kera03/Coding/mobile/freight_match/android/app/src/main/AndroidManifest.xml`.
+- Replace `YOUR_ANDROID_GOOGLE_MAPS_API_KEY` with your Google Maps API key.
 
-This project is a starting point for a Flutter application.
+2. iOS:
+- Open `/Users/kera03/Coding/mobile/freight_match/ios/Runner/Info.plist`.
+- Replace `YOUR_IOS_GOOGLE_MAPS_API_KEY` with your Google Maps API key.
 
-A few resources to get you started if this is your first Flutter project:
+## Google Sign-In setup
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+Run with your OAuth client ids using dart defines:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+flutter run \
+  --dart-define=GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID \
+  --dart-define=GOOGLE_SERVER_CLIENT_ID=YOUR_GOOGLE_SERVER_CLIENT_ID
+```
+
+If your platform configuration already provides client ids, these defines can be omitted.

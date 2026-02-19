@@ -1,39 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:freight_match/models/user.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../config/theme.dart';
 import '../../models/listing.dart';
-
-class _VehicleBadge extends StatelessWidget {
-  final VehicleType type;
-  const _VehicleBadge(this.type);
-
-  Color get _color {
-    switch (type) {
-      case VehicleType.van:        return AppColors.van;
-      case VehicleType.pickup:     return AppColors.pickup;
-      case VehicleType.smallTruck: return AppColors.smallTruck;
-      case VehicleType.largeTruck: return AppColors.largeTruck;
-      case VehicleType.flatbed:    return AppColors.flatbed;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: _color.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(AppRadius.full),
-          border: Border.all(color: _color.withOpacity(0.4)),
-        ),
-        child: Text(
-          type.label,
-          style: GoogleFonts.dmSans(
-              fontSize: 11, fontWeight: FontWeight.w600, color: _color),
-        ),
-      );
-}
+import '../design/app_atoms.dart';
 
 class ListingCardHorizontal extends StatelessWidget {
   final Listing listing;
@@ -94,37 +64,9 @@ class ListingCardHorizontal extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // route
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            listing.pickup.city,
-                            style: GoogleFonts.dmSans(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 4),
-                          child: Icon(Icons.arrow_forward,
-                              size: 11, color: AppColors.primary),
-                        ),
-                        Expanded(
-                          child: Text(
-                            listing.delivery.city,
-                            style: GoogleFonts.dmSans(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.primary),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.end,
-                          ),
-                        ),
-                      ],
+                    RouteCityRow(
+                      from: listing.pickup.city,
+                      to: listing.delivery.city,
                     ),
                     const SizedBox(height: 6),
 
@@ -147,7 +89,7 @@ class ListingCardHorizontal extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    _VehicleBadge(listing.requiredVehicleType),
+                    VehicleTypeChip(type: listing.requiredVehicleType),
                   ],
                 ),
               ),

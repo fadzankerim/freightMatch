@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,7 +10,6 @@ import '../../models/user.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/listings_provider.dart';
 import '../../utils/helpers.dart';
-import '../../widgets/common/custom_card.dart';
 import '../../widgets/common/loading_spinner.dart';
 import '../../widgets/listings/listing_card.dart';
 import '../../widgets/listings/listing_card_horizontal.dart';
@@ -25,7 +26,9 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _searchCtrl = TextEditingController();
   String _query     = '';
+  String _pendingQuery = '';
   bool   _searching = false;
+  Timer? _searchDebounce;
 
   @override
   void initState() {
@@ -44,8 +47,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    _pendingQuery = value;
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 220), () {
+      if (!mounted) return;
+      setState(() => _query = _pendingQuery);
+    });
   }
 
   @override
@@ -135,10 +148,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       controller: _searchCtrl,
                       searching: _searching,
                       onFocus: () => setState(() => _searching = true),
-                      onChanged: (v) => setState(() => _query = v),
+                      onChanged: _onSearchChanged,
                       onClear: () => setState(() {
+                        _searchDebounce?.cancel();
                         _searching = false;
                         _query = '';
+                        _pendingQuery = '';
                         _searchCtrl.clear();
                       }),
                     ).animate().fade(delay: 120.ms),

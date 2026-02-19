@@ -9,6 +9,7 @@ class AppConstants {
   // Storage keys
   static const String keyAuthToken  = 'auth_token';
   static const String keyUserId     = 'user_id';
+  static const String keyCurrentUser = 'current_user';
   static const String keyHomeCity   = 'home_city';
   static const String keyOnboarded  = 'onboarded';
 

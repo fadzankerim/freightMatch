@@ -5,8 +5,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import '../../config/theme.dart';
 import '../../models/listing.dart';
-import '../../models/user.dart';
 import '../../providers/listings_provider.dart';
+import '../design/app_atoms.dart';
 import '../common/loading_spinner.dart';
 
 class ListingCard extends ConsumerWidget {
@@ -88,17 +88,17 @@ class ListingCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // route
-                    _RouteRow(from: listing.pickup.city, to: listing.delivery.city),
+                    RouteCityRow(from: listing.pickup.city, to: listing.delivery.city),
                     const SizedBox(height: 10),
 
                     // stats chips
                     Row(
                       children: [
-                        _StatChip(Icons.straighten_rounded, listing.distanceDisplay),
+                        MetaChip(icon: Icons.straighten_rounded, label: listing.distanceDisplay),
                         const SizedBox(width: 6),
-                        _StatChip(Icons.timer_outlined, listing.durationDisplay),
+                        MetaChip(icon: Icons.timer_outlined, label: listing.durationDisplay),
                         const SizedBox(width: 6),
-                        _StatChip(Icons.scale_outlined, listing.load.weightDisplay),
+                        MetaChip(icon: Icons.scale_outlined, label: listing.load.weightDisplay),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -106,7 +106,7 @@ class ListingCard extends ConsumerWidget {
                     // vehicle + date
                     Row(
                       children: [
-                        _VehicleBadge(listing.requiredVehicleType),
+                        VehicleTypeChip(type: listing.requiredVehicleType),
                         const Spacer(),
                         Icon(Icons.calendar_today_outlined,
                             size: 11, color: AppColors.textMuted),
@@ -272,115 +272,6 @@ class _NegotiableBadge extends StatelessWidget {
             fontWeight: FontWeight.w600,
             color: AppColors.success,
           ),
-        ),
-      );
-}
-
-class _RouteRow extends StatelessWidget {
-  final String from;
-  final String to;
-  const _RouteRow({required this.from, required this.to});
-
-  @override
-  Widget build(BuildContext context) => Row(
-        children: [
-          Expanded(
-            child: Text(
-              from,
-              style: GoogleFonts.dmSans(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              children: [
-                Container(
-                    width: 4,
-                    height: 4,
-                    decoration: const BoxDecoration(
-                        color: AppColors.primary, shape: BoxShape.circle)),
-                Container(width: 28, height: 1, color: AppColors.primary),
-                const Icon(Icons.arrow_forward,
-                    size: 13, color: AppColors.primary),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Text(
-              to,
-              style: GoogleFonts.dmSans(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.end,
-            ),
-          ),
-        ],
-      );
-}
-
-class _StatChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  const _StatChip(this.icon, this.label);
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: AppColors.bgElevated,
-          borderRadius: BorderRadius.circular(AppRadius.full),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 11, color: AppColors.textMuted),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: GoogleFonts.dmSans(
-                  fontSize: 11,
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500),
-            ),
-          ],
-        ),
-      );
-}
-
-class _VehicleBadge extends StatelessWidget {
-  final VehicleType type;
-  const _VehicleBadge(this.type);
-
-  Color get _color {
-    switch (type) {
-      case VehicleType.van:        return AppColors.van;
-      case VehicleType.pickup:     return AppColors.pickup;
-      case VehicleType.smallTruck: return AppColors.smallTruck;
-      case VehicleType.largeTruck: return AppColors.largeTruck;
-      case VehicleType.flatbed:    return AppColors.flatbed;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: _color.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(AppRadius.full),
-          border: Border.all(color: _color.withOpacity(0.4)),
-        ),
-        child: Text(
-          type.label,
-          style: GoogleFonts.dmSans(
-              fontSize: 11, fontWeight: FontWeight.w600, color: _color),
         ),
       );
 }

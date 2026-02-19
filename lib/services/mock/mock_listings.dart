@@ -1,5 +1,6 @@
 import '../../models/listing.dart';
 import '../../models/user.dart';
+import '../route_matching_service.dart';
 import 'mock_users.dart';
 
 AppUser _user(String id) =>
@@ -277,11 +278,30 @@ final mockListings = <Listing>[
   ),
 ];
 
-/// Returns listings whose delivery city is close to the user's home location.
-List<Listing> listingsOnRoute(double homeLat, double homeLng) {
-  return mockListings.where((l) {
-    final dLat = (l.delivery.lat - homeLat).abs();
-    final dLng = (l.delivery.lng - homeLng).abs();
-    return dLat < 2.0 && dLng < 2.0;
-  }).toList();
+/// Returns listings that sit in a corridor from driver's current city back home.
+List<Listing> listingsOnRoute({
+  required double currentLat,
+  required double currentLng,
+  required double homeLat,
+  required double homeLng,
+}) {
+  final results = RouteMatchingService.matchListingsAlongRoute(
+    listings: mockListings,
+    current: GeoPoint(
+      address: '',
+      city: 'Current',
+      country: '',
+      lat: currentLat,
+      lng: currentLng,
+    ),
+    home: GeoPoint(
+      address: '',
+      city: 'Home',
+      country: '',
+      lat: homeLat,
+      lng: homeLng,
+    ),
+  );
+
+  return results.map((r) => r.listing).toList();
 }

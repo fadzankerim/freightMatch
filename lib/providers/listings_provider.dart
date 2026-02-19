@@ -29,7 +29,7 @@ class ListingsFilters{
     maxPrice != null ||
     maxDistanceKm != null ||
     priceNegotiableOnly ||
-    sortBy.isNotEmpty;
+    sortBy != 'date';
 
   ListingsFilters copyWith({
     VehicleType? vehicleType,
@@ -123,6 +123,8 @@ class ListingsNotifier extends StateNotifier<ListingsState> {
       );
       final onRoute = home != null
           ? await _api.fetchListingsOnRoute(
+              currentLat: lat ?? home.lat,
+              currentLng: lng ?? home.lng,
               homeLat: home.lat, homeLng: home.lng)
           : <Listing>[];
       state = state.copyWith(all: all, onRoute: onRoute, isLoading: false);

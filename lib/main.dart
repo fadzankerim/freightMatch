@@ -3,102 +3,108 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freight_match/models/listing.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-
-// Your custom imports - ensure these paths match your folder structure
 import 'config/theme.dart';
+import 'models/listing.dart';
+import 'providers/auth_provider.dart';
 import 'screens/auth/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
-import 'screens/home/home_screen.dart'; // Assume you have this for the "Main Shell"
+import 'screens/home/home_screen.dart';
+import 'screens/home/map_screen.dart';
+import 'screens/listings/listing_details_screen.dart';
+import 'screens/listings/create_listing_screen.dart';
+import 'screens/bookings/bookings_screen.dart';
+import 'screens/profile/profile_screen.dart';
+import 'widgets/common/loading_spinner.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Lock orientation to portrait
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
   ]);
-
+  SystemChrome.setSystemUIOverlayStyle(AppTheme.systemUiStyle);
   runApp(const ProviderScope(child: FreightMatchApp()));
 }
 
-// ── App State Enum ──────────────────────────────────────────────────────────
-enum AppStatus { splashing, auth, mainShell }
-
-class FreightMatchApp extends StatefulWidget {
+class FreightMatchApp extends StatelessWidget {
   const FreightMatchApp({super.key});
-
-  @override
-  State<FreightMatchApp> createState() => _FreightMatchAppState();
-}
-
-class _FreightMatchAppState extends State<FreightMatchApp> {
-  AppStatus _status = AppStatus.splashing;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'FreightMatch',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark, // Using your custom theme
-      home: _buildCurrentScreen(),
+      theme: AppTheme.dark,
+      themeMode: ThemeMode.dark,
+      home: const _Root(),
     );
-  }
-
-  // This logic decides what the user sees
-  Widget _buildCurrentScreen() {
-    switch (_status) {
-      case AppStatus.splashing:
-        return SplashScreen(
-          onComplete: () => setState(() => _status = AppStatus.auth),
-        );
-      case AppStatus.auth:
-        return _AuthFlow(
-          onLoginSuccess: () => setState(() => _status = AppStatus.mainShell),
-        );
-      case AppStatus.mainShell:
-        return const _MainShell(); 
-    }
   }
 }
 
-// ── Auth Flow: Toggle between Login & Register ──────────────────────────────
+// ── Root — decides splash → auth → main ───────────────────────────────────────
+class _Root extends ConsumerStatefulWidget {
+  const _Root();
+
+  @override
+  ConsumerState<_Root> createState() => _RootState();
+}
+
+class _RootState extends ConsumerState<_Root> {
+  bool _splashDone = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_splashDone) {
+      return SplashScreen(
+        onComplete: () => setState(() => _splashDone = true),
+      );
+    }
+    final auth = ref.watch(authProvider);
+    if (!auth.isInitialized) {
+      return const Scaffold(body: LoadingSpinner(message: 'Restoring session...'));
+    }
+
+    final authed = auth.isAuthenticated;
+    return AnimatedSwitcher(
+      duration: 300.ms,
+      child: authed ? const _MainShell() : const _AuthFlow(),
+    );
+  }
+}
+
+// ── Auth flow ─────────────────────────────────────────────────────────────────
 class _AuthFlow extends StatefulWidget {
-  final VoidCallback onLoginSuccess;
-  const _AuthFlow({required this.onLoginSuccess});
+  const _AuthFlow();
 
   @override
   State<_AuthFlow> createState() => _AuthFlowState();
 }
 
 class _AuthFlowState extends State<_AuthFlow> {
-  bool _showRegister = false;
+  bool _register = false;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: AnimatedSwitcher(
-        duration: 300.ms,
-        child: _showRegister
-            ? RegisterScreen(
-                key: const ValueKey('reg'),
-                onSuccess: widget.onLoginSuccess,
-                onGoLogin: () => setState(() => _showRegister = false),
-              )
-            : LoginScreen(
-                key: const ValueKey('login'),
-                onSuccess: widget.onLoginSuccess,
-                onGoRegister: () => setState(() => _showRegister = true),
-              ),
-      ),
+    return AnimatedSwitcher(
+      duration: 280.ms,
+      child: _register
+          ? RegisterScreen(
+              key: const ValueKey('reg'),
+              onSuccess: () {},
+              onGoLogin: () => setState(() => _register = false),
+            )
+          : LoginScreen(
+              key: const ValueKey('login'),
+              onSuccess: () {},
+              onGoRegister: () => setState(() => _register = true),
+            ),
     );
   }
 }
 
-// ── Main Shell: The part with your Bottom Nav ───────────────────────────────
+// ── Main shell — bottom nav + listing details overlay ─────────────────────────
 class _MainShell extends StatefulWidget {
   const _MainShell();
 
@@ -107,28 +113,98 @@ class _MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<_MainShell> {
-  int _currentIndex = 0;
+  int _tab = 0;
+  Listing? _detailListing; // non-null → slide ListingDetails on top
 
-  // These would be your actual screens from your 'screens/' folder
-  final List<Widget> _pages = [
-    
-  ];
+  void _openListing(Listing l) => setState(() => _detailListing = l);
+  void _closeListing()        => setState(() => _detailListing = null);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
+      body: Stack(
+        children: [
+          // ── Tab body ────────────────────────────────────────────────────
+          _TabBody(
+            tab: _tab,
+            onListingTap: _openListing,
+            onCreateSuccess: () => setState(() => _tab = 0),
+            onLogout: () => setState(() {
+              _tab = 0;
+              _detailListing = null;
+            }),
+          ),
+
+          // ── Listing details slide-over ───────────────────────────────────
+          if (_detailListing != null)
+            Material(
+              color: Colors.transparent,
+              child: GestureDetector(
+                onTap: _closeListing, // tap background closes
+                child: Container(
+                  color: Colors.transparent,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: GestureDetector(
+                      onTap: () {}, // block tap-through
+                      child: ListingDetailsScreen(listing: _detailListing!)
+                          .animate()
+                          .slideX(
+                            begin: 1,
+                            end: 0,
+                            duration: 300.ms,
+                            curve: Curves.easeOutCubic,
+                          ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
-      bottomNavigationBar: _BottomNav(
-        tab: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-      ),
+      // Hide bottom nav when listing detail is open
+      bottomNavigationBar: _detailListing != null
+          ? null
+          : _BottomNav(
+              tab: _tab,
+              onTap: (i) => setState(() {
+                _tab = i;
+                _detailListing = null;
+              }),
+            ),
     );
   }
 }
 
+// ── Tab body switcher ─────────────────────────────────────────────────────────
+class _TabBody extends StatelessWidget {
+  final int tab;
+  final void Function(Listing) onListingTap;
+  final VoidCallback onCreateSuccess;
+  final VoidCallback onLogout;
+
+  const _TabBody({
+    required this.tab,
+    required this.onListingTap,
+    required this.onCreateSuccess,
+    required this.onLogout,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return switch (tab) {
+      0 => HomeScreen(key: const ValueKey('home'), onListingTap: onListingTap),
+      1 => MapScreen(key: const ValueKey('map'), onListingTap: onListingTap),
+      2 => CreateListingScreen(
+          key: const ValueKey('create'), onSuccess: onCreateSuccess),
+      3 => const BookingsScreen(key: ValueKey('bookings')),
+      4 => ProfileScreen(key: const ValueKey('profile'), onLogout: onLogout),
+      _ => HomeScreen(key: const ValueKey('home'), onListingTap: onListingTap),
+    };
+  }
+}
+
+// ── Custom bottom nav bar ─────────────────────────────────────────────────────
 class _BottomNav extends StatelessWidget {
   final int tab;
   final ValueChanged<int> onTap;

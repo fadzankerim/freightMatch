@@ -278,5 +278,3 @@ final earningsSummaryProvider = Provider<EarningsSummary>((ref) {
     completedJobs: completed.length + 127,
   );
 });
-
-

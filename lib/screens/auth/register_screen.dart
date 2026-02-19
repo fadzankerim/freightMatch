@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../config/theme.dart';
@@ -28,6 +29,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _emailCtrl  = TextEditingController();
   final _phoneCtrl  = TextEditingController();
   final _passCtrl   = TextEditingController();
+  final _homeCityCtrl = TextEditingController(text: 'Sarajevo');
+  final _homeCountryCtrl =
+      TextEditingController(text: 'Bosnia and Herzegovina');
   UserType _type    = UserType.hauler;
   bool _obscure     = true;
 
@@ -37,23 +41,52 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     _emailCtrl.dispose();
     _phoneCtrl.dispose();
     _passCtrl.dispose();
+    _homeCityCtrl.dispose();
+    _homeCountryCtrl.dispose();
     super.dispose();
+  }
+
+  Future<UserLocation> _resolveHomeLocation() async {
+    final city = _homeCityCtrl.text.trim();
+    final country = _homeCountryCtrl.text.trim();
+    if (city.isEmpty || country.isEmpty) {
+      return const UserLocation(
+        city: 'Sarajevo',
+        country: 'Bosnia and Herzegovina',
+        lat: 43.8563,
+        lng: 18.4131,
+      );
+    }
+    try {
+      final places = await locationFromAddress('$city, $country');
+      if (places.isNotEmpty) {
+        return UserLocation(
+          city: city,
+          country: country,
+          lat: places.first.latitude,
+          lng: places.first.longitude,
+        );
+      }
+    } catch (_) {}
+
+    return UserLocation(
+      city: city,
+      country: country,
+      lat: 43.8563,
+      lng: 18.4131,
+    );
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    final homeLocation = await _resolveHomeLocation();
     await ref.read(authProvider.notifier).register(
           name: _nameCtrl.text.trim(),
           email: _emailCtrl.text.trim(),
           phone: _phoneCtrl.text.trim(),
           password: _passCtrl.text,
           userType: _type,
-          homeLocation: const UserLocation(
-            city: 'Sarajevo',
-            country: 'Bosnia and Herzegovina',
-            lat: 43.8563,
-            lng: 18.4131,
-          ),
+          homeLocation: homeLocation,
         );
     if (mounted && ref.read(authProvider).isAuthenticated) {
       widget.onSuccess();
@@ -180,6 +213,31 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   validator: (v) =>
                       v == null || v.length < 8 ? 'Enter a valid number' : null,
                 ).animate().fade(delay: 200.ms).slideY(begin: 0.1),
+                const SizedBox(height: 14),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: CustomInput(
+                        controller: _homeCityCtrl,
+                        label: 'HOME CITY',
+                        hint: 'Sarajevo',
+                        validator: (v) =>
+                            v == null || v.trim().isEmpty ? 'Required' : null,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: CustomInput(
+                        controller: _homeCountryCtrl,
+                        label: 'HOME COUNTRY',
+                        hint: 'Bosnia and Herzegovina',
+                        validator: (v) =>
+                            v == null || v.trim().isEmpty ? 'Required' : null,
+                      ),
+                    ),
+                  ],
+                ).animate().fade(delay: 220.ms).slideY(begin: 0.1),
                 const SizedBox(height: 14),
 
                 CustomInput(

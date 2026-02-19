@@ -36,6 +36,18 @@ class ApiService {
     return AppUser.fromJson(res.data['user']);
   }
 
+  Future<AppUser> loginWithGoogle({
+    String? idToken,
+    AppUser? fallbackUser,
+  }) async {
+    if (useMock) {
+      await _delay();
+      return fallbackUser ?? mockCurrentUser;
+    }
+    final res = await _dio.post('/auth/google', data: {'idToken': idToken});
+    return AppUser.fromJson(res.data['user']);
+  }
+
   Future<AppUser> register({
     required String name,
     required String email,
@@ -85,15 +97,27 @@ class ApiService {
   }
 
   Future<List<Listing>> fetchListingsOnRoute({
+    required double currentLat,
+    required double currentLng,
     required double homeLat,
     required double homeLng,
   }) async {
     if (useMock) {
       await _delay(ms: 600);
-      return listingsOnRoute(homeLat, homeLng);
+      return listingsOnRoute(
+        currentLat: currentLat,
+        currentLng: currentLng,
+        homeLat: homeLat,
+        homeLng: homeLng,
+      );
     }
     final res = await _dio.get('/listings/on-route',
-        queryParameters: {'homeLat': homeLat, 'homeLng': homeLng});
+        queryParameters: {
+          'currentLat': currentLat,
+          'currentLng': currentLng,
+          'homeLat': homeLat,
+          'homeLng': homeLng,
+        });
     return (res.data as List).map((j) => Listing.fromJson(j)).toList();
   }
 

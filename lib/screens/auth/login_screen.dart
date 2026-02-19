@@ -45,9 +45,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _submitGoogle() async {
+    await ref.read(authProvider.notifier).loginWithGoogle();
+    if (mounted && ref.read(authProvider).isAuthenticated) {
+      widget.onSuccess();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final loading = ref.watch(authProvider).isLoading;
+    final authState = ref.watch(authProvider);
+    final loading = authState.isLoading;
 
     return Scaffold(
       body: SafeArea(
@@ -148,6 +156,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   isLoading: loading,
                   width: double.infinity,
                 ).animate().fade(delay: 300.ms).slideY(begin: 0.1),
+
+                const SizedBox(height: 12),
+
+                CustomButton(
+                  label: 'Continue with Google',
+                  onPressed: _submitGoogle,
+                  variant: ButtonVariant.outlined,
+                  icon: Icons.g_mobiledata_rounded,
+                  isLoading: loading,
+                  width: double.infinity,
+                ).animate().fade(delay: 340.ms).slideY(begin: 0.1),
+
+                if (authState.error != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    authState.error!,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: AppColors.error),
+                  ),
+                ],
 
                 const SizedBox(height: 28),
 
